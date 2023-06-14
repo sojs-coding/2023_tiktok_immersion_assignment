@@ -2,6 +2,7 @@ pre:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install github.com/cloudwego/kitex/tool/cmd/kitex@latest
 	go install github.com/cloudwego/thriftgo@latest
+	cd rpc-server && go get -u github.com/go-sql-driver/mysql
 
 generate:
 	mkdir -p ./http-server/proto_gen
