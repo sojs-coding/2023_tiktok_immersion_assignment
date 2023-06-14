@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/TikTokTechImmersion/assignment_demo_2023/http-server/kitex_gen/rpc"
@@ -48,12 +50,25 @@ func sendMessage(ctx context.Context, c *app.RequestContext) {
 		c.String(consts.StatusBadRequest, "Failed to parse request body: %v", err)
 		return
 	}
+
+	// Validate request
+	stringSlice := strings.Split(req.Chat, ":")
+	if len(stringSlice) != 2 {
+		c.String(consts.StatusBadRequest, "Invalid chat id")
+		return
+	}
+	// Order id
+	if stringSlice[0] > stringSlice[1] {
+		req.Chat = fmt.Sprintf("%s:%s", stringSlice[1], stringSlice[0])
+	}
+
+	// Send request to RPC server
 	resp, err := cli.Send(ctx, &rpc.SendRequest{
 		Message: &rpc.Message{
-			Chat:   req.Chat,
-			Text:   req.Text,
-			Sender: req.Sender,
-		},
+			Chat:     req.Chat,
+			Text:     req.Text,
+			Sender:   req.Sender,
+			SendTime: time.Now().UnixMicro()},
 	})
 	if err != nil {
 		c.String(consts.StatusInternalServerError, err.Error())
@@ -72,6 +87,19 @@ func pullMessage(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	// Validate request
+	stringSlice := strings.Split(req.Chat, ":")
+	if len(stringSlice) != 2 {
+		c.String(consts.StatusBadRequest, "Invalid chat id")
+		return
+	}
+	// Order id
+	if stringSlice[0] > stringSlice[1] {
+		req.Chat = fmt.Sprintf("%s:%s", stringSlice[1], stringSlice[0])
+	}
+
+	log.Println(req.Chat, req.Cursor, req.Limit, req.Reverse)
+	//Send request to RPC Server
 	resp, err := cli.Pull(ctx, &rpc.PullRequest{
 		Chat:    req.Chat,
 		Cursor:  req.Cursor,
